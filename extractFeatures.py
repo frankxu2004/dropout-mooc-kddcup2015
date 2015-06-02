@@ -38,12 +38,19 @@ browser = 13
 deep_degree = 14
 
 def readCSV( path ):
-    csvfile = file(path,'r')
+    csvfile = file(path,'rb')
     return csvfile
 
 def writeCSV( path ):
-    csvfile = open(path,'w')
+    csvfile = open(path,'wb')
     return csvfile
+
+def putdict( reader):
+    d = {}
+    for line in reader:
+        d[line[0]] = float(line[1])
+    print "dict created"
+    return d
 
 # object文件，父节点，子节点关系
 def put2dict( reader):
@@ -53,7 +60,7 @@ def put2dict( reader):
         for i in l:
              dic_father[i] = line[1]
     print "dict created"
-    return dicfa
+    return dic_father
 
 # 计算子节点的深度
 def deep(father,key):
@@ -118,7 +125,7 @@ def dataAnalysis(reader, lis, father):
     print "finish analysising"
     return lis
 
-def write2csv(lis, writer):
+def write2csv(lis, writer,dic):
     for i in lis:
         if i == 0:
             continue
@@ -137,9 +144,7 @@ def write2csv(lis, writer):
         server_rate = float(i[browser])/i[login_times]
         frequent = float(i[login_times])/100
         deep_rate = float(i[deep_degree])/i[login_times]
-        data = [i[0],frequent,morning_login_rate,afternoon_login_rate,
-                evening_login_rate,nagivate_rate,access_rate,problem_rate,
-                video_rate,wiki_rate,discussion_rate,browser_rate,deep_rate]
+        data = [i[0],frequent,dic[str(i[0])]]
         writer.writerow( data )
     print "finish writing"
     
@@ -148,6 +153,9 @@ if __name__ == '__main__':
     start = time.time()
     obj = readCSV("object.csv")
     father = put2dict( csv.reader(obj) )
+    drop = readCSV("dropout.csv")
+    drop_dict = putdict(csv.reader(drop))
+    drop.close()
     csvfilefolder = {1:["enrollment_test.csv","log_test.csv","test.csv"],2:["enrollment_train.csv","log_train.csv","train.csv" ]}
     for key in csvfilefolder:
         user = readCSV(csvfilefolder[key][0])
@@ -155,7 +163,7 @@ if __name__ == '__main__':
         output = writeCSV(csvfilefolder[key][2])
         user_info = initialize( csv.reader(user))
         user_info = dataAnalysis( csv.reader(log), user_info, father)
-        write2csv( user_info, csv.writer(output ))
+        write2csv( user_info, csv.writer(output ),drop_dict)
         user.close()
         log.close()
         output.close()
